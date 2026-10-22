@@ -1,0 +1,32 @@
+# Servicios de voz para el plugin Pomi, solo con procesador (sin tarjeta gráfica). Iniciar con: docker compose up -d
+#
+# Probado en: Ryzen 5 5600 (6 núcleos / 12 hilos), sin GPU.
+#
+# Los puertos solo aceptan conexiones de esta computadora (127.0.0.1), porque no tienen contraseña.
+# Sirve así si el servidor de Paper corre en esta misma computadora:
+#   kokoro-url=http://127.0.0.1:8880/v1/audio/speech
+#   whisper-url=http://127.0.0.1:8881/v1/audio/transcriptions
+# Si Paper corre en otra computadora, quita el "127.0.0.1:" de los puertos, abre 8880 y 8881 solo a
+# tu red en el firewall, y usa la ip de esta computadora en esas dos direcciones.
+services:
+  # Voz de Pomi (texto a voz, Kokoro-82M; el modelo ya viene en la imagen)
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.4
+    ports:
+      - "127.0.0.1:8880:8880"
+    restart: unless-stopped
+
+  # Oídos de Pomi (voz a texto, Whisper). El modelo es el "whisper-modelo" del plugin.
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    environment:
+      # Mantener el modelo cargado; si se descarga tras 5 min sin uso, la siguiente frase tarda ~1.5 s más.
+      - WHISPER__TTL=-1
+    ports:
+      - "127.0.0.1:8881:8000"   # 8881 afuera -> 8000 dentro del contenedor
+    volumes:
+      - whisper-models:/home/ubuntu/.cache/huggingface/hub
+    restart: unless-stopped
+
+volumes:
+  whisper-models:

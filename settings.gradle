@@ -1,0 +1,4 @@
+rootProject.name = 'PomiVoz'
+
+// Pomi Voz en Java (Linux, Mac o Windows con Java). La de Windows nativa está en windows/.
+include 'voz-app'

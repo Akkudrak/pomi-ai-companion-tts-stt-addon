@@ -1,0 +1,5 @@
+.gradle/
+build/
+bin/
+*.exe
+conversacion-*.txt

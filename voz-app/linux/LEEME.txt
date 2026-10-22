@@ -1,0 +1,27 @@
+Pomi Voz para Linux
+===================
+
+Lee en voz alta lo que Pomi dice en el servidor y te deja hablarle ("Pomi, consigue madera", o
+manteniendo una tecla). Es la misma app que la de Windows, hecha en Java.
+
+Requisitos: Java 17 o más.
+  Ubuntu/Debian:  sudo apt install openjdk-17-jre
+  Fedora:         sudo dnf install java-17-openjdk
+  Arch:           sudo pacman -S jre17-openjdk
+
+Abrir:
+  ./pomi-voz.sh                 (o: java -jar PomiVoz.jar)
+  ./instalar.sh                 una vez, para que salga en el menú de aplicaciones
+
+Usar:
+  1. En el juego escribe /p voz: te da la dirección del servidor y un código.
+  2. Ponlos en la app y dale Vincular. Queda vinculada.
+  3. Di "Pomi, baila" (casilla "Con Pomi") o mantén tu tecla para hablar (botón "Tecla").
+
+Notas:
+  - La tecla para hablar se lee aunque Minecraft tenga el foco, en sesiones X11. En Wayland los
+    programas no pueden leer teclas de otras ventanas: ahí usa "Con Pomi" (o entra a una sesión X11).
+  - Si el visor no se mueve al hablar, elige otro micrófono en la lista o sube "Vol. mic".
+  - La configuración se guarda en ~/.config/PomiVoz/config.txt.
+  - La conversación de cada día se guarda junto a PomiVoz.jar: conversacion-AAAA-MM-DD.txt.
+  - empaquetar-jpackage.sh arma una versión con Java incluido (se corre en Linux con un JDK).

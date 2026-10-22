@@ -1,0 +1,50 @@
+# Servicios de voz para el plugin Pomi, con tarjeta gráfica NVIDIA. Iniciar con: docker compose up -d
+#
+# Probado en: Ryzen 7 5700 (8 núcleos / 16 hilos), RTX 4060 (8 GB), 32 GB RAM.
+# Los dos servicios corren en la GPU (CUDA). Requiere el driver de NVIDIA y, en Linux, el NVIDIA
+# Container Toolkit (ver README). Sin GPU NVIDIA usa ../cpu/docker-compose.yml.
+#
+# Los puertos aceptan conexiones de la red (sin "127.0.0.1:") y los servicios NO tienen contraseña.
+# Abre los puertos 8880 y 8881 en el firewall solo a tu red local (al servidor de Paper), nunca a internet.
+# En plugins/Pomi/config.properties:
+#   kokoro-url=http://<ip-de-esta-computadora>:8880/v1/audio/speech
+#   whisper-url=http://<ip-de-esta-computadora>:8881/v1/audio/transcriptions
+services:
+  # Voz de Pomi (texto a voz, Kokoro-82M; el modelo ya viene en la imagen)
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.4
+    ports:
+      - "8880:8880"          # sin 127.0.0.1: acepta conexiones de la red
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Oídos de Pomi (voz a texto, Whisper). El modelo es el "whisper-modelo" del plugin.
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:latest-cuda
+    environment:
+      # Mantener el modelo cargado; si se descarga tras 5 min sin uso, la siguiente frase tarda ~1.5 s más.
+      - WHISPER__TTL=-1
+      # Correr Whisper en la GPU con media precisión (float16): más rápido y usa la mitad de memoria de video.
+      - WHISPER__INFERENCE_DEVICE=cuda
+      - WHISPER__COMPUTE_TYPE=float16
+    ports:
+      - "8881:8000"          # 8881 afuera -> 8000 dentro del contenedor
+    volumes:
+      - whisper-models:/home/ubuntu/.cache/huggingface/hub
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  whisper-models:

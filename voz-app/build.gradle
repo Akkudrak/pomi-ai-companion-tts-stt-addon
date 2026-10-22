@@ -1,0 +1,59 @@
+// Pomi Voz en Java (Swing + Java Sound): la versión para Linux de la app de voz. Corre en cualquier
+// sistema con Java 17 o más: java -jar PomiVoz.jar. La tecla global usa JNativeHook (X11, Windows, Mac).
+//   ./gradlew :voz-app:jar      → voz-app/build/libs/PomiVoz.jar
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.github.kwhat:jnativehook:2.2.2'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // Lo que trae la mayoría de las distros.
+    options.release = 17
+}
+
+// Un solo jar con JNativeHook (y sus librerías nativas) adentro.
+jar {
+    archiveFileName = 'PomiVoz.jar'
+    manifest {
+        // JNativeHook loads its native library: allowed without the JDK's warning.
+        attributes 'Main-Class': 'com.maine.pomivoz.PomiVoz', 'Enable-Native-Access': 'ALL-UNNAMED'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+// El paquete para Linux: jar, lanzador, instalador del menú y LÉEME.
+//   ./gradlew :voz-app:linux      → voz-app/build/distributions/PomiVoz-linux.zip
+tasks.register('linux', Zip) {
+    group = 'pomi'
+    description = 'Arma el zip de Pomi Voz para Linux.'
+    archiveFileName = 'PomiVoz-linux.zip'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    into('PomiVoz') {
+        from(jar)
+        from('linux') {
+            filePermissions { unix('rwxr-xr-x') }
+            include '*.sh'
+        }
+        from('linux') {
+            include 'LEEME.txt'
+        }
+    }
+}
